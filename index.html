@@ -9,6 +9,10 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
         body {
@@ -19,86 +23,308 @@
             justify-content: center;
             align-items: center;
             font-family: Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a1929 0%, #001122 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        .welcome-screen.fade-out {
+            opacity: 0;
+            transform: translateY(-100%);
+            pointer-events: none;
+        }
+
+        .welcome-content {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+            animation: welcomeAppear 1.5s ease;
+        }
+
+        @keyframes welcomeAppear {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-title {
+            font-size: 64px;
+            color: #00aaff;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 20px rgba(0, 170, 255, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(0, 170, 255, 0.8),
+                           0 0 30px rgba(0, 170, 255, 0.6);
+            }
+        }
+
+        .welcome-subtitle {
+            font-size: 24px;
+            color: #cccccc;
+            margin-bottom: 40px;
+        }
+
+        .welcome-text {
+            font-size: 18px;
+            color: #888888;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        .continue-btn {
+            background: #00aaff;
+            color: white;
+            border: none;
+            padding: 20px 50px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 20px;
+        }
+
+        .continue-btn:hover {
+            background: #0088cc;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 170, 255, 0.4);
+        }
+
+        .setup-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a1a 0%, #001122 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(50px);
+        }
+
+        .setup-screen.active {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        .setup-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-50px);
+        }
+
+        .setup-content {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(10, 20, 40, 0.8);
+            border-radius: 15px;
+            border: 2px solid #00aaff;
+        }
+
+        .setup-title {
+            font-size: 36px;
+            color: #00aaff;
+            margin-bottom: 30px;
+        }
+
+        .setup-text {
+            font-size: 18px;
+            color: #cccccc;
+            margin-bottom: 30px;
+        }
+
+        .path-input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .path-input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            min-width: 500px;
+        }
+
+        .path-input:focus {
+            border-color: #00aaff;
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
+        }
+
+        .save-path-btn {
+            background: #00aaff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .save-path-btn:hover {
+            background: #0088cc;
+            transform: translateY(-2px);
+        }
+
+        .path-example {
+            font-size: 14px;
+            color: #888888;
+            margin-top: 10px;
+            font-style: italic;
         }
 
         .launcher {
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             padding: 40px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+        }
+
+        .launcher.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .settings-btn {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(0, 170, 255, 0.2);
+            color: #00aaff;
+            border: 2px solid #00aaff;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .settings-btn:hover {
+            background: rgba(0, 170, 255, 0.4);
+            transform: translateY(-2px);
         }
 
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
+            position: relative;
         }
 
         .header h1 {
-            font-size: 48px;
+            font-size: 56px;
             color: #ffffff;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
+            text-shadow: 0 0 15px rgba(0, 170, 255, 0.3);
         }
 
         .header p {
             color: #888888;
-            font-size: 18px;
+            font-size: 20px;
         }
 
         .games {
             display: flex;
             justify-content: center;
-            gap: 60px;
-            margin-bottom: 50px;
+            gap: 50px;
+            margin-bottom: 60px;
         }
 
         .game {
-            text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
+            width: 320px;
+            height: 320px;
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid transparent;
         }
 
         .game.active {
-            transform: scale(1.05);
+            transform: scale(1.08);
+            box-shadow: 0 0 40px rgba(0, 170, 255, 0.6);
+            border: 3px solid #00aaff;
         }
 
         .game-image {
-            width: 320px;
-            height: 180px;
-            border-radius: 15px;
-            overflow: hidden;
-            margin-bottom: 15px;
-            border: 3px solid #333333;
-            transition: all 0.3s ease;
-        }
-
-        .game.active .game-image {
-            border-color: #00aaff;
-            box-shadow: 0 0 30px rgba(0, 170, 255, 0.3);
+            width: 100%;
+            height: 100%;
         }
 
         .game img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: all 0.3s ease;
-        }
-
-        .game:hover img {
-            transform: scale(1.05);
         }
 
         .game-name {
-            font-size: 24px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            text-align: center;
+            font-size: 22px;
             font-weight: bold;
-            color: #ffffff;
-            margin-bottom: 5px;
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
         }
 
-        .game-id {
-            font-size: 14px;
-            color: #00aaff;
-            font-family: monospace;
+        .game:hover .game-name {
+            transform: translateY(0);
         }
 
         .controls {
@@ -106,54 +332,147 @@
         }
 
         .launch-btn {
-            background: #00aaff;
+            background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
             color: white;
             border: none;
-            padding: 25px 60px;
-            font-size: 24px;
+            padding: 30px 80px;
+            font-size: 28px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-bottom: 20px;
-            width: 400px;
+            margin-bottom: 30px;
+            width: 450px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 170, 255, 0.3);
         }
 
         .launch-btn:hover {
-            background: #0088cc;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 170, 255, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 170, 255, 0.4);
         }
 
         .launch-btn:active {
             transform: translateY(0);
         }
 
+        .launch-btn:disabled {
+            background: #555555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         .status {
             color: #00aaff;
-            font-size: 16px;
+            font-size: 18px;
             font-family: monospace;
+            margin-bottom: 10px;
+            min-height: 24px;
+        }
+
+        .game-info {
+            color: #888888;
+            font-size: 16px;
+            margin-top: 10px;
         }
 
         .notification {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: #111111;
+            background: rgba(10, 20, 30, 0.95);
             color: white;
-            padding: 15px 25px;
+            padding: 20px 30px;
             border: 2px solid #00aaff;
+            border-radius: 10px;
             display: none;
+            z-index: 1000;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
         .notification.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .connection-status {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .connection-status.connected {
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            display: block;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff0000;
+            border: 1px solid #ff0000;
             display: block;
         }
     </style>
 </head>
 <body>
-    <div class="launcher">
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-content">
+            <h1 class="welcome-title">CS Launcher</h1>
+            <div class="welcome-subtitle">Лаунчер для Counter-Strike</div>
+            <div class="welcome-text">
+                Наслаждайтесь удобным запуском CS2 и CS:GO с возможностью настройки путей.
+            </div>
+            <button class="continue-btn" onclick="startSetup()">Продолжить</button>
+        </div>
+    </div>
+
+    <div class="setup-screen" id="setupScreen">
+        <div class="setup-content">
+            <h2 class="setup-title">Настройка пути к CS:GO</h2>
+            <div class="setup-text">
+                Для запуска CS:GO укажите путь к папке с игрой.<br>
+                Путь будет сохранен и использоваться для будущих запусков.
+            </div>
+            <div class="path-input-group">
+                <input type="text" id="gamePath" class="path-input" 
+                       placeholder="C:\Program Files\Steam\steamapps\common\Counter-Strike Global Offensive">
+                <button class="save-path-btn" onclick="saveGamePath()">Сохранить</button>
+            </div>
+            <div class="path-example">
+                Пример: C:\Program Files\Steam\steamapps\common\Counter-Strike Global Offensive
+            </div>
+            <div class="status" id="setupStatus" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <div class="connection-status" id="connectionStatus"></div>
+
+    <button class="settings-btn" id="settingsBtn" style="display: none;" onclick="showSettings()">
+        ⚙️ Настройки
+    </button>
+
+    <div class="launcher" id="mainLauncher">
         <div class="header">
             <h1>CS Launcher</h1>
             <p>Select game and launch</p>
@@ -165,7 +484,6 @@
                     <img src="https://raw.githubusercontent.com/NationShield/CSLBY.github.io/refs/heads/main/IMG/cs2.jpg" alt="CS2">
                 </div>
                 <div class="game-name">CS2</div>
-                <div class="game-id">Steam ID: 730</div>
             </div>
 
             <div class="game" onclick="selectGame('csgo')">
@@ -173,15 +491,15 @@
                     <img src="https://raw.githubusercontent.com/NationShield/CSLBY.github.io/refs/heads/main/IMG/csgo.jpg" alt="CS:GO">
                 </div>
                 <div class="game-name">CS:GO</div>
-                <div class="game-id">Steam ID: 730</div>
             </div>
         </div>
 
         <div class="controls">
-            <button class="launch-btn" onclick="launchGame()">
+            <div class="status" id="status">Готово к запуску</div>
+            <div class="game-info" id="gameInfo">Выбрана игра: CS2 (запуск через Steam)</div>
+            <button class="launch-btn" onclick="launchGame()" id="launchBtn">
                 Launch Game
             </button>
-            <div class="status" id="status">Ready to launch</div>
         </div>
     </div>
 
@@ -191,8 +509,177 @@
 
     <script>
         let selectedGame = 'cs2';
+        let savedGamePath = localStorage.getItem('csgo_game_path') || '';
+        let ws = null;
+        let originalClientVersion = null;
+        let gameProcessId = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            if (savedGamePath) {
+                document.getElementById('welcomeScreen').style.display = 'none';
+                showMainLauncher();
+            }
+            connectToLauncher();
+        });
+        
+        function connectToLauncher() {
+            try {
+                ws = new WebSocket('ws://localhost:8765');
+                
+                ws.onopen = function() {
+                    updateConnectionStatus(true);
+                    console.log('Connected to launcher');
+                };
+                
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    handleLauncherMessage(data);
+                };
+                
+                ws.onclose = function() {
+                    updateConnectionStatus(false);
+                    setTimeout(connectToLauncher, 3000);
+                };
+                
+                ws.onerror = function() {
+                    updateConnectionStatus(false);
+                };
+            } catch (e) {
+                console.error('WebSocket error:', e);
+                updateConnectionStatus(false);
+            }
+        }
+        
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.textContent = '✓ Подключено к лаунчеру';
+                statusElement.className = 'connection-status connected';
+            } else {
+                statusElement.textContent = '✗ Нет подключения к лаунчеру';
+                statusElement.className = 'connection-status disconnected';
+            }
+        }
+        
+        function handleLauncherMessage(data) {
+            console.log('Message from launcher:', data);
+            
+            if (data.type === 'game_started') {
+                document.getElementById('status').textContent = 'Игра запущена, отслеживание...';
+                gameProcessId = data.pid;
+                showNotification('Игра успешно запущена');
+            }
+            else if (data.type === 'game_closed') {
+                document.getElementById('status').textContent = 'Игра закрыта, восстановление настроек...';
+                showNotification('Игра закрыта, настройки восстановлены');
+                setTimeout(() => {
+                    document.getElementById('status').textContent = 'Готово к запуску';
+                }, 2000);
+                gameProcessId = null;
+            }
+            else if (data.type === 'version_modified') {
+                document.getElementById('status').textContent = 'Версия изменена на ' + data.new_version;
+            }
+            else if (data.type === 'version_restored') {
+                document.getElementById('status').textContent = 'Версия восстановлена: ' + data.original_version;
+            }
+            else if (data.type === 'error') {
+                document.getElementById('status').textContent = 'Ошибка: ' + data.message;
+                showNotification('Ошибка: ' + data.message);
+            }
+        }
+        
+        function sendToLauncher(data) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(data));
+                return true;
+            }
+            return false;
+        }
+        
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        document.addEventListener('selectstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        function startSetup() {
+            document.getElementById('welcomeScreen').classList.add('fade-out');
+            
+            setTimeout(() => {
+                document.getElementById('setupScreen').classList.add('active');
+                document.getElementById('welcomeScreen').style.display = 'none';
+                
+                if (savedGamePath) {
+                    document.getElementById('gamePath').value = savedGamePath;
+                }
+            }, 1000);
+        }
+        
+        function saveGamePath() {
+            const pathInput = document.getElementById('gamePath');
+            const path = pathInput.value.trim();
+            const setupStatus = document.getElementById('setupStatus');
+            
+            if (path) {
+                localStorage.setItem('csgo_game_path', path);
+                savedGamePath = path;
+                
+                setupStatus.textContent = '✓ Путь успешно сохранен!';
+                setupStatus.style.color = '#00ffaa';
+                
+                showNotification('Путь к CS:GO сохранен');
+                
+                setTimeout(() => {
+                    document.getElementById('setupScreen').classList.remove('active');
+                    document.getElementById('setupScreen').classList.add('fade-out');
+                    
+                    setTimeout(() => {
+                        showMainLauncher();
+                    }, 800);
+                }, 1000);
+            } else {
+                setupStatus.textContent = '✗ Введите путь к папке с игрой';
+                setupStatus.style.color = '#ff5555';
+            }
+        }
+        
+        function showMainLauncher() {
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('settingsBtn').style.display = 'block';
+            document.getElementById('mainLauncher').classList.add('active');
+            
+            updateGameStatus();
+        }
+        
+        function showSettings() {
+            document.getElementById('setupScreen').style.display = 'flex';
+            document.getElementById('setupScreen').classList.remove('fade-out');
+            document.getElementById('setupScreen').classList.add('active');
+            document.getElementById('mainLauncher').classList.remove('active');
+            
+            if (savedGamePath) {
+                document.getElementById('gamePath').value = savedGamePath;
+            }
+            
+            document.getElementById('setupStatus').textContent = '';
+        }
         
         function selectGame(game) {
+            if (!savedGamePath && game === 'csgo') {
+                showNotification('Сначала укажите путь к CS:GO в настройках!');
+                return;
+            }
+            
             document.querySelectorAll('.game').forEach(gameElement => {
                 gameElement.classList.remove('active');
             });
@@ -200,33 +687,88 @@
             event.currentTarget.classList.add('active');
             selectedGame = game;
             
-            document.getElementById('status').textContent = `${game.toUpperCase()} selected`;
+            updateGameStatus();
+        }
+        
+        function updateGameStatus() {
+            const status = document.getElementById('status');
+            const gameInfo = document.getElementById('gameInfo');
+            
+            if (selectedGame === 'cs2') {
+                status.textContent = 'Готово к запуску CS2 через Steam';
+                gameInfo.textContent = 'Выбрана игра: CS2 (запуск через Steam)';
+            } else {
+                if (savedGamePath) {
+                    status.textContent = 'Готово к запуску CS:GO через лаунчер';
+                    gameInfo.textContent = 'Выбрана игра: CS:GO (запуск через лаунчер)';
+                } else {
+                    status.textContent = 'Укажите путь к CS:GO в настройках';
+                    gameInfo.textContent = 'Выбрана игра: CS:GO (требуется указать путь)';
+                }
+            }
         }
         
         function launchGame() {
-            const games = {
-                'cs2': 'steam://run/730',
-                'csgo': 'steam://run/730'
-            };
+            const btn = document.getElementById('launchBtn');
+            const status = document.getElementById('status');
             
-            document.getElementById('status').textContent = 'Launching...';
-            showNotification(`Starting ${selectedGame.toUpperCase()}...`);
-            
-            const btn = document.querySelector('.launch-btn');
             btn.disabled = true;
-            btn.textContent = 'Launching...';
+            btn.textContent = 'Запуск...';
             
-            setTimeout(() => {
-                window.location.href = games[selectedGame];
+            if (selectedGame === 'cs2') {
+                status.textContent = 'Запуск CS2 через Steam...';
+                showNotification('Запуск CS2 через Steam');
                 
                 setTimeout(() => {
-                    showNotification('Game is starting via Steam');
-                    document.getElementById('status').textContent = 'Game starting...';
+                    window.location.href = 'steam://run/730';
                     
-                    btn.disabled = false;
-                    btn.textContent = 'Launch Game';
+                    setTimeout(() => {
+                        showNotification('CS2 запускается через Steam');
+                        status.textContent = 'CS2 запускается...';
+                        
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.textContent = 'Launch Game';
+                            status.textContent = 'CS2 запущен - проверьте Steam';
+                        }, 3000);
+                    }, 1000);
+                }, 1500);
+                
+            } else if (selectedGame === 'csgo') {
+                if (!savedGamePath) {
+                    showNotification('Сначала укажите путь к папке CS:GO в настройках!');
+                    status.textContent = 'Ошибка: путь к CS:GO не указан';
+                    
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = 'Launch Game';
+                        status.textContent = 'Укажите путь к CS:GO в настройках';
+                    }, 2000);
+                    return;
+                }
+                
+                if (!sendToLauncher({
+                    type: 'launch_csgo',
+                    game_path: savedGamePath
+                })) {
+                    showNotification('Нет подключения к лаунчеру!');
+                    status.textContent = 'Ошибка: нет подключения к лаунчеру';
+                    
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = 'Launch Game';
+                        status.textContent = 'Переподключитесь к лаунчеру';
+                    }, 2000);
+                    return;
+                }
+                
+                status.textContent = 'Отправка запроса лаунчеру...';
+                showNotification('Запрос на запуск CS:GO отправлен');
+                
+                setTimeout(() => {
+                    status.textContent = 'Лаунчер обрабатывает запрос...';
                 }, 1000);
-            }, 2000);
+            }
         }
         
         function showNotification(message) {
