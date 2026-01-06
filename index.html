@@ -531,7 +531,7 @@
         let currentPage = null;
         let loadingTimer = null;
         let loadingSeconds = 0;
-        let minLoadingTime = 1.5;
+        let minLoadingTime = 1.001;
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
@@ -542,7 +542,7 @@
             setTimeout(() => {
                 connectToLauncher();
                 startLoadingTimer();
-            }, 300);
+            }, 100);
         }
 
         function showLoadingScreen() {
@@ -561,14 +561,14 @@
         function startLoadingTimer() {
             loadingSeconds = 0;
             loadingTimer = setInterval(() => {
-                loadingSeconds += 0.1;
+                loadingSeconds += 0.01;
                 if (loadingSeconds >= minLoadingTime) {
                     clearInterval(loadingTimer);
                     if (!savedGamePath) {
                         showWelcomeScreen();
                     }
                 }
-            }, 100);
+            }, 10);
         }
 
         function showWelcomeScreen() {
@@ -772,7 +772,7 @@
                             } else {
                                 setTimeout(completeSetup, (minLoadingTime - loadingSeconds) * 1000);
                             }
-                        }, 300);
+                        }, 100);
                     } else {
                         if (loadingSeconds >= minLoadingTime) {
                             showWelcomeScreen();
