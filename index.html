@@ -10,21 +10,14 @@
             padding: 0;
             box-sizing: border-box;
             user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
         }
 
         body {
             background: #000000;
             color: #ffffff;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             font-family: Arial, sans-serif;
             overflow: hidden;
-            position: relative;
         }
 
         .welcome-screen {
@@ -56,14 +49,8 @@
         }
 
         @keyframes welcomeAppear {
-            0% {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            0% { opacity: 0; transform: translateY(50px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
 
         .welcome-title {
@@ -77,13 +64,8 @@
         }
 
         @keyframes glow {
-            from {
-                text-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
-            }
-            to {
-                text-shadow: 0 0 20px rgba(0, 170, 255, 0.8),
-                           0 0 30px rgba(0, 170, 255, 0.6);
-            }
+            from { text-shadow: 0 0 10px rgba(0, 170, 255, 0.5); }
+            to { text-shadow: 0 0 20px rgba(0, 170, 255, 0.8), 0 0 30px rgba(0, 170, 255, 0.6); }
         }
 
         .welcome-subtitle {
@@ -399,14 +381,8 @@
         }
 
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .connection-status {
@@ -595,20 +571,6 @@
     </div>
 
     <script>
-        const STORAGE_KEYS = {
-            CURRENT_PATH: 'csgo_game_path',
-            PATH_HISTORY: 'csgo_path_history',
-            LAUNCH_COUNT: 'csgo_launch_count',
-            LAST_LAUNCH: 'csgo_last_launch',
-            USER_PREFERENCES: 'csgo_user_prefs'
-        };
-
-        const CONFIG = {
-            MAX_HISTORY_ITEMS: 10,
-            AUTO_SAVE_HISTORY: true,
-            RELAUNCH_COOLDOWN: 10
-        };
-
         let selectedGame = 'cs2';
         let savedGamePath = '';
         let pathHistory = [];
@@ -616,34 +578,44 @@
         let gameProcessId = null;
         let launchCooldown = false;
         let cooldownTimer = null;
-        let countdownSeconds = CONFIG.RELAUNCH_COOLDOWN;
-        
-        let appData = {
-            paths: [],
-            settings: {
-                autoSaveHistory: true,
-                maxHistoryItems: 10,
-                lastUsedGame: 'cs2',
-                theme: 'dark'
-            },
-            statistics: {
-                totalLaunches: 0,
-                cs2Launches: 0,
-                csgoLaunches: 0,
-                lastLaunchTime: null,
-                favorites: []
-            }
-        };
+        let countdownSeconds = 10;
         
         document.addEventListener('DOMContentLoaded', function() {
-            loadAllData();
             initializeApp();
         });
         
-        function loadAllData() {
-            savedGamePath = localStorage.getItem(STORAGE_KEYS.CURRENT_PATH) || '';
+        function initializeApp() {
+            loadDataFromLauncher();
             
-            const historyJson = localStorage.getItem(STORAGE_KEYS.PATH_HISTORY);
+            if (savedGamePath) {
+                document.getElementById('welcomeScreen').style.display = 'none';
+                showMainLauncher();
+            }
+            
+            connectToLauncher();
+            
+            if (localStorage.getItem('selectedGame')) {
+                selectedGame = localStorage.getItem('selectedGame');
+                selectGame(selectedGame, true);
+            }
+        }
+        
+        function loadDataFromLauncher() {
+            if (window.pyLauncher && window.pyLauncher.getConfig) {
+                const config = window.pyLauncher.getConfig();
+                if (config) {
+                    savedGamePath = config.csgo_path || '';
+                    pathHistory = config.path_history || [];
+                    updateHistoryDisplay();
+                }
+            } else {
+                loadFromLocalStorage();
+            }
+        }
+        
+        function loadFromLocalStorage() {
+            savedGamePath = localStorage.getItem('csgo_path') || '';
+            const historyJson = localStorage.getItem('csgo_path_history');
             if (historyJson) {
                 try {
                     pathHistory = JSON.parse(historyJson);
@@ -651,35 +623,27 @@
                     pathHistory = [];
                 }
             }
+            updateHistoryDisplay();
+        }
+        
+        function saveToLauncher() {
+            const data = {
+                csgo_path: savedGamePath,
+                path_history: pathHistory,
+                selected_game: selectedGame
+            };
             
-            const prefsJson = localStorage.getItem(STORAGE_KEYS.USER_PREFERENCES);
-            if (prefsJson) {
-                try {
-                    const prefs = JSON.parse(prefsJson);
-                    appData.settings = { ...appData.settings, ...prefs };
-                } catch (e) {
-                }
-            }
-            
-            appData.statistics.totalLaunches = parseInt(localStorage.getItem(STORAGE_KEYS.LAUNCH_COUNT) || '0');
-            const lastLaunch = localStorage.getItem(STORAGE_KEYS.LAST_LAUNCH);
-            if (lastLaunch) {
-                appData.statistics.lastLaunchTime = new Date(lastLaunch);
+            if (window.pyLauncher && window.pyLauncher.saveConfig) {
+                window.pyLauncher.saveConfig(data);
+            } else {
+                saveToLocalStorage(data);
             }
         }
         
-        function saveAllData() {
-            if (savedGamePath) {
-                localStorage.setItem(STORAGE_KEYS.CURRENT_PATH, savedGamePath);
-            }
-            
-            localStorage.setItem(STORAGE_KEYS.PATH_HISTORY, JSON.stringify(pathHistory));
-            localStorage.setItem(STORAGE_KEYS.USER_PREFERENCES, JSON.stringify(appData.settings));
-            localStorage.setItem(STORAGE_KEYS.LAUNCH_COUNT, appData.statistics.totalLaunches.toString());
-            
-            if (appData.statistics.lastLaunchTime) {
-                localStorage.setItem(STORAGE_KEYS.LAST_LAUNCH, appData.statistics.lastLaunchTime.toISOString());
-            }
+        function saveToLocalStorage(data) {
+            localStorage.setItem('csgo_path', data.csgo_path);
+            localStorage.setItem('csgo_path_history', JSON.stringify(data.path_history));
+            localStorage.setItem('selectedGame', data.selected_game);
         }
         
         function addToHistory(path) {
@@ -692,28 +656,28 @@
             
             pathHistory.unshift(path);
             
-            if (pathHistory.length > CONFIG.MAX_HISTORY_ITEMS) {
-                pathHistory = pathHistory.slice(0, CONFIG.MAX_HISTORY_ITEMS);
+            if (pathHistory.length > 10) {
+                pathHistory = pathHistory.slice(0, 10);
             }
             
-            localStorage.setItem(STORAGE_KEYS.PATH_HISTORY, JSON.stringify(pathHistory));
             updateHistoryDisplay();
+            saveToLauncher();
         }
         
         function removeFromHistory(path) {
             const index = pathHistory.indexOf(path);
             if (index !== -1) {
                 pathHistory.splice(index, 1);
-                localStorage.setItem(STORAGE_KEYS.PATH_HISTORY, JSON.stringify(pathHistory));
                 updateHistoryDisplay();
+                saveToLauncher();
             }
         }
         
         function clearHistory() {
             if (confirm('Вы уверены, что хотите очистить всю историю путей?')) {
                 pathHistory = [];
-                localStorage.removeItem(STORAGE_KEYS.PATH_HISTORY);
                 updateHistoryDisplay();
+                saveToLauncher();
                 showNotification('История путей очищена');
             }
         }
@@ -766,14 +730,11 @@
             
             if (path) {
                 savedGamePath = path;
-                localStorage.setItem(STORAGE_KEYS.CURRENT_PATH, path);
                 addToHistory(path);
+                saveToLauncher();
                 
                 setupStatus.textContent = '✓ Путь успешно сохранен!';
                 setupStatus.style.color = '#00ffaa';
-                
-                appData.statistics.totalLaunches++;
-                saveAllData();
                 
                 showNotification('Путь к CS:GO сохранен');
                 
@@ -788,21 +749,6 @@
             } else {
                 setupStatus.textContent = '✗ Введите путь к папке с игрой';
                 setupStatus.style.color = '#ff5555';
-            }
-        }
-        
-        function initializeApp() {
-            if (savedGamePath) {
-                document.getElementById('welcomeScreen').style.display = 'none';
-                showMainLauncher();
-            }
-            
-            updateHistoryDisplay();
-            connectToLauncher();
-            
-            if (appData.settings.lastUsedGame) {
-                selectedGame = appData.settings.lastUsedGame;
-                selectGame(selectedGame, true);
             }
         }
         
@@ -821,9 +767,7 @@
             }
             
             selectedGame = game;
-            appData.settings.lastUsedGame = game;
-            saveAllData();
-            
+            saveToLauncher();
             updateGameStatus();
         }
         
@@ -914,7 +858,7 @@
         
         function startCooldown() {
             launchCooldown = true;
-            countdownSeconds = CONFIG.RELAUNCH_COOLDOWN;
+            countdownSeconds = 10;
             
             const btn = document.getElementById('launchBtn');
             const timerElement = document.getElementById('countdownTimer');
@@ -1012,17 +956,6 @@
             
             btn.disabled = true;
             btn.textContent = 'Запуск...';
-            
-            appData.statistics.totalLaunches++;
-            appData.statistics.lastLaunchTime = new Date();
-            
-            if (selectedGame === 'cs2') {
-                appData.statistics.cs2Launches++;
-            } else {
-                appData.statistics.csgoLaunches++;
-            }
-            
-            saveAllData();
             
             if (selectedGame === 'cs2') {
                 status.textContent = 'Запуск CS2 через Steam...';
