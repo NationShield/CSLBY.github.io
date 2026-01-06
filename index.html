@@ -204,13 +204,10 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            transition: opacity 1s ease, transform 1s ease;
         }
 
-        .welcome-screen.fade-out {
-            opacity: 0;
-            transform: translateY(-100%);
-            pointer-events: none;
+        .welcome-screen.hidden {
+            display: none;
         }
 
         .welcome-content {
@@ -297,22 +294,11 @@
             justify-content: center;
             align-items: center;
             z-index: 999;
-            transition: opacity 0.8s ease, transform 0.8s ease;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(50px);
+            display: none;
         }
 
         .setup-screen.active {
-            opacity: 1;
-            pointer-events: all;
-            transform: translateY(0);
-        }
-
-        .setup-screen.fade-out {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-50px);
+            display: flex;
         }
 
         .setup-content {
@@ -502,9 +488,7 @@
         <div class="setup-content">
             <h2 class="setup-title">Настройка пути к CS:GO</h2>
             <div class="setup-text">
-                Для запуска CS:GO укажите путь к папке с игрой.<br>
-                Путь будет сохранен в файл на диске C в формате:<br>
-                <code style="color:#00aaff;">csgo=D:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive</code>
+                Для запуска CS:GO укажите путь к папке с игрой.
             </div>
             <div class="path-input-group">
                 <input type="text" id="gamePath" class="path-input" 
@@ -535,15 +519,21 @@
         let cooldownTimer = null;
         let countdownSeconds = 10;
         let currentPage = null;
-        let setupCompleted = false;
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
         });
 
         function initializeApp() {
+            showWelcomeScreen();
             connectToLauncher();
-            loadGamePath();
+        }
+
+        function showWelcomeScreen() {
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('cs2Page').classList.remove('active');
+            document.getElementById('csgoPage').classList.remove('active');
         }
 
         function showSidebar() {
@@ -568,19 +558,24 @@
         }
 
         function openGamePage(game) {
-            currentPage = game;
-            updateSidebarButtons();
-            
-            if (game === 'cs2') {
-                document.getElementById('cs2Page').classList.add('active');
-                document.getElementById('csgoPage').classList.remove('active');
-                selectedGame = 'cs2';
-                updatePageStatus('cs2');
-            } else if (game === 'csgo') {
-                document.getElementById('csgoPage').classList.add('active');
-                document.getElementById('cs2Page').classList.remove('active');
-                selectedGame = 'csgo';
-                updatePageStatus('csgo');
+            if (game === 'cs2' || game === 'csgo') {
+                currentPage = game;
+                updateSidebarButtons();
+                
+                document.getElementById('welcomeScreen').classList.add('hidden');
+                document.getElementById('setupScreen').classList.remove('active');
+                
+                if (game === 'cs2') {
+                    document.getElementById('cs2Page').classList.add('active');
+                    document.getElementById('csgoPage').classList.remove('active');
+                    selectedGame = 'cs2';
+                    updatePageStatus('cs2');
+                } else if (game === 'csgo') {
+                    document.getElementById('csgoPage').classList.add('active');
+                    document.getElementById('cs2Page').classList.remove('active');
+                    selectedGame = 'csgo';
+                    updatePageStatus('csgo');
+                }
             }
         }
 
@@ -637,9 +632,8 @@
         }
 
         function showSettings() {
-            document.getElementById('setupScreen').style.display = 'flex';
-            document.getElementById('setupScreen').classList.remove('fade-out');
             document.getElementById('setupScreen').classList.add('active');
+            document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('cs2Page').classList.remove('active');
             document.getElementById('csgoPage').classList.remove('active');
             currentPage = null;
@@ -651,7 +645,6 @@
         }
 
         function completeSetup() {
-            setupCompleted = true;
             showSidebar();
             openGamePage('cs2');
         }
@@ -707,7 +700,7 @@
             }
             else if (data.type === 'path_saved') {
                 const setupStatus = document.getElementById('setupStatus');
-                setupStatus.textContent = '✓ Путь успешно сохранен в файл!';
+                setupStatus.textContent = '✓ Путь успешно сохранен!';
                 setupStatus.style.color = '#00ffaa';
                 
                 let rawPath = document.getElementById('gamePath').value.trim();
@@ -716,30 +709,18 @@
                 }
                 savedGamePath = rawPath;
                 
-                showNotification('Путь к CS:GO сохранен в файл');
+                showNotification('Путь к CS:GO сохранен');
                 
                 updatePageStatus('csgo');
                 
                 setTimeout(() => {
                     document.getElementById('setupScreen').classList.remove('active');
-                    document.getElementById('setupScreen').classList.add('fade-out');
-                    
-                    setTimeout(() => {
-                        completeSetup();
-                    }, 800);
+                    completeSetup();
                 }, 1000);
             }
             else if (data.type === 'game_path') {
                 if (data.path) {
                     savedGamePath = data.path;
-                    if (savedGamePath) {
-                        document.getElementById('welcomeScreen').style.display = 'none';
-                        completeSetup();
-                    } else {
-                        document.getElementById('welcomeScreen').style.display = 'flex';
-                    }
-                } else {
-                    document.getElementById('welcomeScreen').style.display = 'flex';
                 }
             }
             else if (data.type === 'error') {
@@ -823,16 +804,12 @@
         });
 
         function startSetup() {
-            document.getElementById('welcomeScreen').classList.add('fade-out');
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            showSettings();
 
-            setTimeout(() => {
-                showSettings();
-                document.getElementById('welcomeScreen').style.display = 'none';
-
-                if (savedGamePath) {
-                    document.getElementById('gamePath').value = savedGamePath;
-                }
-            }, 1000);
+            if (savedGamePath) {
+                document.getElementById('gamePath').value = savedGamePath;
+            }
         }
 
         function launchGame() {
