@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CS Launcher</title>
     <style>
-        /* Стили остаются такими же как в вашем коде */
         * {
             margin: 0;
             padding: 0;
@@ -16,7 +15,424 @@
             -ms-user-select: none;
         }
 
-        /* ... все ваши стили остаются без изменений ... */
+        body {
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a1929 0%, #001122 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        .welcome-screen.fade-out {
+            opacity: 0;
+            transform: translateY(-100%);
+            pointer-events: none;
+        }
+
+        .welcome-content {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+            animation: welcomeAppear 1.5s ease;
+        }
+
+        @keyframes welcomeAppear {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-title {
+            font-size: 64px;
+            color: #00aaff;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 20px rgba(0, 170, 255, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(0, 170, 255, 0.8),
+                           0 0 30px rgba(0, 170, 255, 0.6);
+            }
+        }
+
+        .welcome-subtitle {
+            font-size: 24px;
+            color: #cccccc;
+            margin-bottom: 40px;
+        }
+
+        .welcome-text {
+            font-size: 18px;
+            color: #888888;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        .continue-btn {
+            background: #00aaff;
+            color: white;
+            border: none;
+            padding: 20px 50px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 20px;
+        }
+
+        .continue-btn:hover {
+            background: #0088cc;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 170, 255, 0.4);
+        }
+
+        .setup-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a1a 0%, #001122 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(50px);
+        }
+
+        .setup-screen.active {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        .setup-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-50px);
+        }
+
+        .setup-content {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(10, 20, 40, 0.8);
+            border-radius: 15px;
+            border: 2px solid #00aaff;
+        }
+
+        .setup-title {
+            font-size: 36px;
+            color: #00aaff;
+            margin-bottom: 30px;
+        }
+
+        .setup-text {
+            font-size: 18px;
+            color: #cccccc;
+            margin-bottom: 30px;
+        }
+
+        .path-input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .path-input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            min-width: 500px;
+        }
+
+        .path-input:focus {
+            border-color: #00aaff;
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
+        }
+
+        .save-path-btn {
+            background: #00aaff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .save-path-btn:hover {
+            background: #0088cc;
+            transform: translateY(-2px);
+        }
+
+        .path-example {
+            font-size: 14px;
+            color: #888888;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .launcher {
+            width: 100%;
+            max-width: 1000px;
+            padding: 40px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+        }
+
+        .launcher.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .settings-btn {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(0, 170, 255, 0.2);
+            color: #00aaff;
+            border: 2px solid #00aaff;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .settings-btn:hover {
+            background: rgba(0, 170, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 56px;
+            color: #ffffff;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 15px rgba(0, 170, 255, 0.3);
+        }
+
+        .header p {
+            color: #888888;
+            font-size: 20px;
+        }
+
+        .games {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-bottom: 60px;
+        }
+
+        .game {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 320px;
+            height: 320px;
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid transparent;
+        }
+
+        .game.active {
+            transform: scale(1.08);
+            box-shadow: 0 0 40px rgba(0, 170, 255, 0.6);
+            border: 3px solid #00aaff;
+        }
+
+        .game-image {
+            width: 100%;
+            height: 100%;
+        }
+
+        .game img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .game-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .game:hover .game-name {
+            transform: translateY(0);
+        }
+
+        .controls {
+            text-align: center;
+        }
+
+        .launch-btn {
+            background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
+            color: white;
+            border: none;
+            padding: 30px 80px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+            width: 450px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 170, 255, 0.3);
+        }
+
+        .launch-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 170, 255, 0.4);
+        }
+
+        .launch-btn:active {
+            transform: translateY(0);
+        }
+
+        .launch-btn:disabled {
+            background: #555555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status {
+            color: #00aaff;
+            font-size: 18px;
+            font-family: monospace;
+            margin-bottom: 10px;
+            min-height: 24px;
+        }
+
+        .game-info {
+            color: #888888;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(10, 20, 30, 0.95);
+            color: white;
+            padding: 20px 30px;
+            border: 2px solid #00aaff;
+            border-radius: 10px;
+            display: none;
+            z-index: 1000;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .connection-status {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .connection-status.connected {
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            display: block;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff0000;
+            border: 1px solid #ff0000;
+            display: block;
+        }
 
         .path-history {
             margin-top: 15px;
@@ -85,6 +501,13 @@
         .clear-history-btn:hover {
             background: rgba(255, 85, 85, 0.1);
         }
+
+        .countdown-timer {
+            font-size: 16px;
+            color: #ffaa00;
+            margin-top: 10px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -113,14 +536,12 @@
                 <button class="save-path-btn" onclick="saveGamePath()">Сохранить</button>
             </div>
             
-            <!-- Автозаполнение из истории -->
             <datalist id="pathHistory"></datalist>
             
             <div class="path-example">
                 Пример: C:\Program Files\Steam\steamapps\common\Counter-Strike Global Offensive
             </div>
             
-            <!-- История путей -->
             <div class="path-history" id="pathHistoryContainer" style="display: none;">
                 <div class="history-title">История путей:</div>
                 <div id="historyList"></div>
@@ -161,6 +582,7 @@
 
         <div class="controls">
             <div class="status" id="status">Готово к запуску</div>
+            <div class="countdown-timer" id="countdownTimer"></div>
             <div class="game-info" id="gameInfo">Выбрана игра: CS2 (запуск через Steam)</div>
             <button class="launch-btn" onclick="launchGame()" id="launchBtn">
                 Launch Game
@@ -173,7 +595,6 @@
     </div>
 
     <script>
-        // Инициализация хранилища
         const STORAGE_KEYS = {
             CURRENT_PATH: 'csgo_game_path',
             PATH_HISTORY: 'csgo_path_history',
@@ -182,20 +603,21 @@
             USER_PREFERENCES: 'csgo_user_prefs'
         };
 
-        // Конфигурация
         const CONFIG = {
             MAX_HISTORY_ITEMS: 10,
-            AUTO_SAVE_HISTORY: true
+            AUTO_SAVE_HISTORY: true,
+            RELAUNCH_COOLDOWN: 10
         };
 
-        // Инициализация при загрузке
         let selectedGame = 'cs2';
         let savedGamePath = '';
         let pathHistory = [];
         let ws = null;
         let gameProcessId = null;
+        let launchCooldown = false;
+        let cooldownTimer = null;
+        let countdownSeconds = CONFIG.RELAUNCH_COOLDOWN;
         
-        // Основные данные приложения
         let appData = {
             paths: [],
             settings: {
@@ -219,32 +641,26 @@
         });
         
         function loadAllData() {
-            // Загружаем текущий путь
             savedGamePath = localStorage.getItem(STORAGE_KEYS.CURRENT_PATH) || '';
             
-            // Загружаем историю путей
             const historyJson = localStorage.getItem(STORAGE_KEYS.PATH_HISTORY);
             if (historyJson) {
                 try {
                     pathHistory = JSON.parse(historyJson);
                 } catch (e) {
-                    console.error('Ошибка загрузки истории:', e);
                     pathHistory = [];
                 }
             }
             
-            // Загружаем настройки пользователя
             const prefsJson = localStorage.getItem(STORAGE_KEYS.USER_PREFERENCES);
             if (prefsJson) {
                 try {
                     const prefs = JSON.parse(prefsJson);
                     appData.settings = { ...appData.settings, ...prefs };
                 } catch (e) {
-                    console.error('Ошибка загрузки настроек:', e);
                 }
             }
             
-            // Загружаем статистику
             appData.statistics.totalLaunches = parseInt(localStorage.getItem(STORAGE_KEYS.LAUNCH_COUNT) || '0');
             const lastLaunch = localStorage.getItem(STORAGE_KEYS.LAST_LAUNCH);
             if (lastLaunch) {
@@ -253,18 +669,12 @@
         }
         
         function saveAllData() {
-            // Сохраняем текущий путь
             if (savedGamePath) {
                 localStorage.setItem(STORAGE_KEYS.CURRENT_PATH, savedGamePath);
             }
             
-            // Сохраняем историю путей
             localStorage.setItem(STORAGE_KEYS.PATH_HISTORY, JSON.stringify(pathHistory));
-            
-            // Сохраняем настройки
             localStorage.setItem(STORAGE_KEYS.USER_PREFERENCES, JSON.stringify(appData.settings));
-            
-            // Сохраняем статистику запусков
             localStorage.setItem(STORAGE_KEYS.LAUNCH_COUNT, appData.statistics.totalLaunches.toString());
             
             if (appData.statistics.lastLaunchTime) {
@@ -275,24 +685,18 @@
         function addToHistory(path) {
             if (!path || path.trim() === '') return;
             
-            // Удаляем дубликаты
             const index = pathHistory.indexOf(path);
             if (index !== -1) {
                 pathHistory.splice(index, 1);
             }
             
-            // Добавляем в начало
             pathHistory.unshift(path);
             
-            // Ограничиваем количество записей
             if (pathHistory.length > CONFIG.MAX_HISTORY_ITEMS) {
                 pathHistory = pathHistory.slice(0, CONFIG.MAX_HISTORY_ITEMS);
             }
             
-            // Сохраняем историю
             localStorage.setItem(STORAGE_KEYS.PATH_HISTORY, JSON.stringify(pathHistory));
-            
-            // Обновляем отображение истории
             updateHistoryDisplay();
         }
         
@@ -321,7 +725,6 @@
             
             if (!historyList) return;
             
-            // Очищаем список
             historyList.innerHTML = '';
             datalist.innerHTML = '';
             
@@ -332,14 +735,12 @@
             
             historyContainer.style.display = 'block';
             
-            // Добавляем элементы в datalist для автозаполнения
             pathHistory.forEach(path => {
                 const option = document.createElement('option');
                 option.value = path;
                 datalist.appendChild(option);
             });
             
-            // Добавляем элементы в историю
             pathHistory.forEach(path => {
                 const historyItem = document.createElement('div');
                 historyItem.className = 'history-item';
@@ -364,17 +765,13 @@
             const setupStatus = document.getElementById('setupStatus');
             
             if (path) {
-                // Сохраняем путь
                 savedGamePath = path;
                 localStorage.setItem(STORAGE_KEYS.CURRENT_PATH, path);
-                
-                // Добавляем в историю
                 addToHistory(path);
                 
                 setupStatus.textContent = '✓ Путь успешно сохранен!';
                 setupStatus.style.color = '#00ffaa';
                 
-                // Обновляем статистику
                 appData.statistics.totalLaunches++;
                 saveAllData();
                 
@@ -400,13 +797,9 @@
                 showMainLauncher();
             }
             
-            // Показываем историю при загрузке настроек
             updateHistoryDisplay();
-            
-            // Подключаемся к лаунчеру
             connectToLauncher();
             
-            // Восстанавливаем последнюю выбранную игру
             if (appData.settings.lastUsedGame) {
                 selectedGame = appData.settings.lastUsedGame;
                 selectGame(selectedGame, true);
@@ -444,24 +837,16 @@
                 document.getElementById('gamePath').value = savedGamePath;
             }
             
-            // Показываем историю
             updateHistoryDisplay();
-            
             document.getElementById('setupStatus').textContent = '';
         }
         
-        // Остальные функции остаются без изменений
-        // (connectToLauncher, handleLauncherMessage, sendToLauncher, updateConnectionStatus,
-        // startSetup, showMainLauncher, updateGameStatus, launchGame, showNotification)
-        
-        // WebSocket функции остаются без изменений
         function connectToLauncher() {
             try {
                 ws = new WebSocket('ws://localhost:8765');
                 
                 ws.onopen = function() {
                     updateConnectionStatus(true);
-                    console.log('Connected to launcher');
                 };
                 
                 ws.onmessage = function(event) {
@@ -478,7 +863,6 @@
                     updateConnectionStatus(false);
                 };
             } catch (e) {
-                console.error('WebSocket error:', e);
                 updateConnectionStatus(false);
             }
         }
@@ -495,8 +879,6 @@
         }
         
         function handleLauncherMessage(data) {
-            console.log('Message from launcher:', data);
-            
             if (data.type === 'game_started') {
                 document.getElementById('status').textContent = 'Игра запущена, отслеживание...';
                 gameProcessId = data.pid;
@@ -530,7 +912,41 @@
             return false;
         }
         
-        // Защита от копирования/право клика
+        function startCooldown() {
+            launchCooldown = true;
+            countdownSeconds = CONFIG.RELAUNCH_COOLDOWN;
+            
+            const btn = document.getElementById('launchBtn');
+            const timerElement = document.getElementById('countdownTimer');
+            
+            btn.disabled = true;
+            btn.textContent = `Повторный запуск через ${countdownSeconds}с`;
+            
+            cooldownTimer = setInterval(() => {
+                countdownSeconds--;
+                
+                if (countdownSeconds <= 0) {
+                    clearCooldown();
+                    return;
+                }
+                
+                btn.textContent = `Повторный запуск через ${countdownSeconds}с`;
+                timerElement.textContent = `Повторный запуск будет доступен через: ${countdownSeconds} секунд`;
+            }, 1000);
+        }
+        
+        function clearCooldown() {
+            clearInterval(cooldownTimer);
+            launchCooldown = false;
+            
+            const btn = document.getElementById('launchBtn');
+            const timerElement = document.getElementById('countdownTimer');
+            
+            btn.disabled = false;
+            btn.textContent = 'Launch Game';
+            timerElement.textContent = '';
+        }
+        
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             return false;
@@ -586,13 +1002,17 @@
         }
         
         function launchGame() {
+            if (launchCooldown) {
+                showNotification(`Пожалуйста, подождите ${countdownSeconds} секунд`);
+                return;
+            }
+            
             const btn = document.getElementById('launchBtn');
             const status = document.getElementById('status');
             
             btn.disabled = true;
             btn.textContent = 'Запуск...';
             
-            // Обновляем статистику
             appData.statistics.totalLaunches++;
             appData.statistics.lastLaunchTime = new Date();
             
@@ -616,10 +1036,9 @@
                         status.textContent = 'CS2 запускается...';
                         
                         setTimeout(() => {
-                            btn.disabled = false;
-                            btn.textContent = 'Launch Game';
+                            startCooldown();
                             status.textContent = 'CS2 запущен - проверьте Steam';
-                        }, 3000);
+                        }, 1000);
                     }, 1000);
                 }, 1500);
                 
@@ -653,6 +1072,7 @@
                 
                 status.textContent = 'Отправка запроса лаунчеру...';
                 showNotification('Запрос на запуск CS:GO отправлен');
+                startCooldown();
                 
                 setTimeout(() => {
                     status.textContent = 'Лаунчер обрабатывает запрос...';
