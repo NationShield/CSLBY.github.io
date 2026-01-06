@@ -440,16 +440,6 @@
             margin-top: 10px;
             font-weight: bold;
         }
-
-        .ip-display {
-            font-size: 14px;
-            color: #888888;
-            margin-top: 20px;
-            padding: 10px;
-            background: rgba(0, 170, 255, 0.1);
-            border-radius: 8px;
-            display: inline-block;
-        }
     </style>
 </head>
 <body>
@@ -469,7 +459,7 @@
             <h2 class="setup-title">Настройка пути к CS:GO</h2>
             <div class="setup-text">
                 Для запуска CS:GO укажите путь к папке с игрой.<br>
-                Путь будет сохранен по вашему IP-адресу.
+                Путь будет сохранен в файл на диске C.
             </div>
             <div class="path-input-group">
                 <input type="text" id="gamePath" class="path-input" 
@@ -528,203 +518,100 @@
     </div>
 
     <script>
-        const STORAGE_KEYS = {
-            CURRENT_PATH: 'csgo_game_path',
-            LAUNCH_COUNT: 'csgo_launch_count',
-            LAST_LAUNCH: 'csgo_last_launch',
-            USER_PREFERENCES: 'csgo_user_prefs'
-        };
-
-        const CONFIG = {
-            RELAUNCH_COOLDOWN: 10
-        };
-
         let selectedGame = 'cs2';
         let savedGamePath = '';
         let ws = null;
         let gameProcessId = null;
         let launchCooldown = false;
         let cooldownTimer = null;
-        let countdownSeconds = CONFIG.RELAUNCH_COOLDOWN;
-        let userIP = '';
-        
-        let appData = {
-            settings: {
-                lastUsedGame: 'cs2',
-                theme: 'dark'
-            },
-            statistics: {
-                totalLaunches: 0,
-                cs2Launches: 0,
-                csgoLaunches: 0,
-                lastLaunchTime: null
-            }
-        };
-        
+        let countdownSeconds = 10;
+
         document.addEventListener('DOMContentLoaded', function() {
-            getIPAddress();
+            initializeApp();
         });
-        
-        function getIPAddress() {
-            fetch('https://api.ipify.org?format=json')
-                .then(response => response.json())
-                .then(data => {
-                    userIP = data.ip;
-                    loadAllData();
-                    initializeApp();
-                })
-                .catch(error => {
-                    userIP = 'unknown';
-                    loadAllData();
-                    initializeApp();
-                });
+
+        function initializeApp() {
+            loadGamePath();
+            connectToLauncher();
+            selectGame('cs2', true);
         }
-        
-        function loadAllData() {
-            if (userIP && userIP !== 'unknown') {
-                const ipKey = 'csgo_path_ip_' + userIP.replace(/[^a-zA-Z0-9]/g, '_');
-                savedGamePath = localStorage.getItem(ipKey) || '';
-            } else {
-                savedGamePath = localStorage.getItem(STORAGE_KEYS.CURRENT_PATH) || '';
-            }
-            
-            const prefsJson = localStorage.getItem(STORAGE_KEYS.USER_PREFERENCES);
-            if (prefsJson) {
-                try {
-                    const prefs = JSON.parse(prefsJson);
-                    appData.settings = { ...appData.settings, ...prefs };
-                } catch (e) {
-                }
-            }
-            
-            appData.statistics.totalLaunches = parseInt(localStorage.getItem(STORAGE_KEYS.LAUNCH_COUNT) || '0');
-            const lastLaunch = localStorage.getItem(STORAGE_KEYS.LAST_LAUNCH);
-            if (lastLaunch) {
-                appData.statistics.lastLaunchTime = new Date(lastLaunch);
+
+        function loadGamePath() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({type: "get_path"}));
             }
         }
-        
-        function saveAllData() {
-            if (savedGamePath) {
-                if (userIP && userIP !== 'unknown') {
-                    const ipKey = 'csgo_path_ip_' + userIP.replace(/[^a-zA-Z0-9]/g, '_');
-                    localStorage.setItem(ipKey, savedGamePath);
-                } else {
-                    localStorage.setItem(STORAGE_KEYS.CURRENT_PATH, savedGamePath);
-                }
-            }
-            
-            localStorage.setItem(STORAGE_KEYS.USER_PREFERENCES, JSON.stringify(appData.settings));
-            localStorage.setItem(STORAGE_KEYS.LAUNCH_COUNT, appData.statistics.totalLaunches.toString());
-            
-            if (appData.statistics.lastLaunchTime) {
-                localStorage.setItem(STORAGE_KEYS.LAST_LAUNCH, appData.statistics.lastLaunchTime.toISOString());
-            }
-        }
-        
+
         function saveGamePath() {
             const pathInput = document.getElementById('gamePath');
             const path = pathInput.value.trim();
             const setupStatus = document.getElementById('setupStatus');
-            
-            if (path) {
-                savedGamePath = path;
-                
-                if (userIP && userIP !== 'unknown') {
-                    const ipKey = 'csgo_path_ip_' + userIP.replace(/[^a-zA-Z0-9]/g, '_');
-                    localStorage.setItem(ipKey, path);
-                } else {
-                    localStorage.setItem(STORAGE_KEYS.CURRENT_PATH, path);
-                }
-                
-                setupStatus.textContent = '✓ Путь успешно сохранен по IP!';
-                setupStatus.style.color = '#00ffaa';
-                
-                appData.statistics.totalLaunches++;
-                saveAllData();
-                
-                showNotification('Путь к CS:GO сохранен по IP');
-                
-                setTimeout(() => {
-                    document.getElementById('setupScreen').classList.remove('active');
-                    document.getElementById('setupScreen').classList.add('fade-out');
-                    
-                    setTimeout(() => {
-                        showMainLauncher();
-                    }, 800);
-                }, 1000);
-            } else {
+
+            if (!path) {
                 setupStatus.textContent = '✗ Введите путь к папке с игрой';
+                setupStatus.style.color = '#ff5555';
+                return;
+            }
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: "save_path",
+                    game_path: path
+                }));
+            } else {
+                setupStatus.textContent = '✗ Нет подключения к лаунчеру';
                 setupStatus.style.color = '#ff5555';
             }
         }
-        
-        function initializeApp() {
-            if (savedGamePath) {
-                document.getElementById('welcomeScreen').style.display = 'none';
-                showMainLauncher();
-            }
-            
-            connectToLauncher();
-            
-            if (appData.settings.lastUsedGame) {
-                selectedGame = appData.settings.lastUsedGame;
-                selectGame(selectedGame, true);
-            }
-        }
-        
-        function selectGame(game, silent = false) {
-            if (!savedGamePath && game === 'csgo' && !silent) {
-                showNotification('Сначала укажите путь к CS:GO в настройках!');
-                return;
-            }
-            
-            if (!silent) {
-                document.querySelectorAll('.game').forEach(gameElement => {
-                    gameElement.classList.remove('active');
-                });
-                
-                event.currentTarget.classList.add('active');
-            }
-            
-            selectedGame = game;
-            appData.settings.lastUsedGame = game;
-            saveAllData();
-            
-            updateGameStatus();
-        }
-        
+
         function showSettings() {
             document.getElementById('setupScreen').style.display = 'flex';
             document.getElementById('setupScreen').classList.remove('fade-out');
             document.getElementById('setupScreen').classList.add('active');
             document.getElementById('mainLauncher').classList.remove('active');
-            
+
             if (savedGamePath) {
                 document.getElementById('gamePath').value = savedGamePath;
             }
-            
-            document.getElementById('setupStatus').textContent = userIP ? `Ваш IP: ${userIP}` : '';
         }
-        
+
+        function selectGame(game, silent = false) {
+            if (!savedGamePath && game === 'csgo' && !silent) {
+                showNotification('Сначала укажите путь к CS:GO в настройках!');
+                return;
+            }
+
+            if (!silent) {
+                document.querySelectorAll('.game').forEach(gameElement => {
+                    gameElement.classList.remove('active');
+                });
+
+                event.currentTarget.classList.add('active');
+            }
+
+            selectedGame = game;
+            updateGameStatus();
+        }
+
         function connectToLauncher() {
             try {
                 ws = new WebSocket('ws://localhost:8765');
-                
+
                 ws.onopen = function() {
                     updateConnectionStatus(true);
+                    loadGamePath();
                 };
-                
+
                 ws.onmessage = function(event) {
                     const data = JSON.parse(event.data);
                     handleLauncherMessage(data);
                 };
-                
+
                 ws.onclose = function() {
                     updateConnectionStatus(false);
                     setTimeout(connectToLauncher, 3000);
                 };
-                
+
                 ws.onerror = function() {
                     updateConnectionStatus(false);
                 };
@@ -732,7 +619,7 @@
                 updateConnectionStatus(false);
             }
         }
-        
+
         function updateConnectionStatus(connected) {
             const statusElement = document.getElementById('connectionStatus');
             if (connected) {
@@ -743,7 +630,7 @@
                 statusElement.className = 'connection-status disconnected';
             }
         }
-        
+
         function handleLauncherMessage(data) {
             if (data.type === 'game_started') {
                 document.getElementById('status').textContent = 'Игра запущена, отслеживание...';
@@ -758,8 +645,36 @@
                 }, 2000);
                 gameProcessId = null;
             }
-            else if (data.type === 'version_modified') {
-                document.getElementById('status').textContent = 'Версия изменена на ' + data.new_version;
+            else if (data.type === 'path_saved') {
+                const setupStatus = document.getElementById('setupStatus');
+                setupStatus.textContent = '✓ Путь успешно сохранен в файл!';
+                setupStatus.style.color = '#00ffaa';
+                
+                savedGamePath = document.getElementById('gamePath').value.trim();
+                showNotification('Путь к CS:GO сохранен в файл');
+                
+                setTimeout(() => {
+                    document.getElementById('setupScreen').classList.remove('active');
+                    document.getElementById('setupScreen').classList.add('fade-out');
+                    
+                    setTimeout(() => {
+                        showMainLauncher();
+                    }, 800);
+                }, 1000);
+            }
+            else if (data.type === 'game_path') {
+                if (data.path) {
+                    savedGamePath = data.path;
+                    if (!savedGamePath) {
+                        document.getElementById('welcomeScreen').style.display = 'flex';
+                        showMainLauncher();
+                    } else {
+                        document.getElementById('welcomeScreen').style.display = 'none';
+                        showMainLauncher();
+                    }
+                } else {
+                    document.getElementById('welcomeScreen').style.display = 'flex';
+                }
             }
             else if (data.type === 'version_restored') {
                 document.getElementById('status').textContent = 'Версия восстановлена: ' + data.original_version;
@@ -769,7 +684,7 @@
                 showNotification('Ошибка: ' + data.message);
             }
         }
-        
+
         function sendToLauncher(data) {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(data));
@@ -777,82 +692,82 @@
             }
             return false;
         }
-        
+
         function startCooldown() {
             launchCooldown = true;
-            countdownSeconds = CONFIG.RELAUNCH_COOLDOWN;
-            
+            countdownSeconds = 10;
+
             const btn = document.getElementById('launchBtn');
             const timerElement = document.getElementById('countdownTimer');
-            
+
             btn.disabled = true;
             btn.textContent = `Повторный запуск через ${countdownSeconds}с`;
-            
+
             cooldownTimer = setInterval(() => {
                 countdownSeconds--;
-                
+
                 if (countdownSeconds <= 0) {
                     clearCooldown();
                     return;
                 }
-                
+
                 btn.textContent = `Повторный запуск через ${countdownSeconds}с`;
                 timerElement.textContent = `Повторный запуск будет доступен через: ${countdownSeconds} секунд`;
             }, 1000);
         }
-        
+
         function clearCooldown() {
             clearInterval(cooldownTimer);
             launchCooldown = false;
-            
+
             const btn = document.getElementById('launchBtn');
             const timerElement = document.getElementById('countdownTimer');
-            
+
             btn.disabled = false;
             btn.textContent = 'Launch Game';
             timerElement.textContent = '';
         }
-        
+
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             return false;
         });
-        
+
         document.addEventListener('selectstart', function(e) {
             e.preventDefault();
             return false;
         });
-        
+
         document.addEventListener('dragstart', function(e) {
             e.preventDefault();
             return false;
         });
-        
+
         function startSetup() {
             document.getElementById('welcomeScreen').classList.add('fade-out');
-            
+
             setTimeout(() => {
                 document.getElementById('setupScreen').classList.add('active');
                 document.getElementById('welcomeScreen').style.display = 'none';
-                
+
                 if (savedGamePath) {
                     document.getElementById('gamePath').value = savedGamePath;
                 }
             }, 1000);
         }
-        
+
         function showMainLauncher() {
             document.getElementById('setupScreen').style.display = 'none';
             document.getElementById('settingsBtn').style.display = 'block';
             document.getElementById('mainLauncher').classList.add('active');
-            
+
             updateGameStatus();
         }
-        
+
         function updateGameStatus() {
             const status = document.getElementById('status');
             const gameInfo = document.getElementById('gameInfo');
-            
+
             if (selectedGame === 'cs2') {
                 status.textContent = 'Готово к запуску CS2 через Steam';
                 gameInfo.textContent = 'Выбрана игра: CS2 (запуск через Steam)';
@@ -866,53 +781,42 @@
                 }
             }
         }
-        
+
         function launchGame() {
             if (launchCooldown) {
                 showNotification(`Пожалуйста, подождите ${countdownSeconds} секунд`);
                 return;
             }
-            
+
             const btn = document.getElementById('launchBtn');
             const status = document.getElementById('status');
-            
+
             btn.disabled = true;
             btn.textContent = 'Запуск...';
-            
-            appData.statistics.totalLaunches++;
-            appData.statistics.lastLaunchTime = new Date();
-            
-            if (selectedGame === 'cs2') {
-                appData.statistics.cs2Launches++;
-            } else {
-                appData.statistics.csgoLaunches++;
-            }
-            
-            saveAllData();
-            
+
             if (selectedGame === 'cs2') {
                 status.textContent = 'Запуск CS2 через Steam...';
                 showNotification('Запуск CS2 через Steam');
-                
+
                 setTimeout(() => {
                     window.location.href = 'steam://run/730';
-                    
+
                     setTimeout(() => {
                         showNotification('CS2 запускается через Steam');
                         status.textContent = 'CS2 запускается...';
-                        
+
                         setTimeout(() => {
                             startCooldown();
                             status.textContent = 'CS2 запущен - проверьте Steam';
                         }, 1000);
                     }, 1000);
                 }, 1500);
-                
+
             } else if (selectedGame === 'csgo') {
                 if (!savedGamePath) {
                     showNotification('Сначала укажите путь к папке CS:GO в настройках!');
                     status.textContent = 'Ошибка: путь к CS:GO не указан';
-                    
+
                     setTimeout(() => {
                         btn.disabled = false;
                         btn.textContent = 'Launch Game';
@@ -920,14 +824,14 @@
                     }, 2000);
                     return;
                 }
-                
+
                 if (!sendToLauncher({
-                    type: 'launch_csgo',
+                    type: "launch_csgo",
                     game_path: savedGamePath
                 })) {
                     showNotification('Нет подключения к лаунчеру!');
                     status.textContent = 'Ошибка: нет подключения к лаунчеру';
-                    
+
                     setTimeout(() => {
                         btn.disabled = false;
                         btn.textContent = 'Launch Game';
@@ -935,22 +839,22 @@
                     }, 2000);
                     return;
                 }
-                
+
                 status.textContent = 'Отправка запроса лаунчеру...';
                 showNotification('Запрос на запуск CS:GO отправлен');
                 startCooldown();
-                
+
                 setTimeout(() => {
                     status.textContent = 'Лаунчер обрабатывает запрос...';
                 }, 1000);
             }
         }
-        
+
         function showNotification(message) {
             const notification = document.getElementById('notification');
             notification.textContent = message;
             notification.classList.add('show');
-            
+
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
