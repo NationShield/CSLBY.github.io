@@ -585,7 +585,8 @@
         });
         
         function initializeApp() {
-            loadDataFromLauncher();
+            checkSavedData();
+            updateHistoryDisplay();
             
             if (savedGamePath) {
                 document.getElementById('welcomeScreen').style.display = 'none';
@@ -600,20 +601,7 @@
             }
         }
         
-        function loadDataFromLauncher() {
-            if (window.pyLauncher && window.pyLauncher.getConfig) {
-                const config = window.pyLauncher.getConfig();
-                if (config) {
-                    savedGamePath = config.csgo_path || '';
-                    pathHistory = config.path_history || [];
-                    updateHistoryDisplay();
-                }
-            } else {
-                loadFromLocalStorage();
-            }
-        }
-        
-        function loadFromLocalStorage() {
+        function checkSavedData() {
             savedGamePath = localStorage.getItem('csgo_path') || '';
             const historyJson = localStorage.getItem('csgo_path_history');
             if (historyJson) {
@@ -623,27 +611,34 @@
                     pathHistory = [];
                 }
             }
-            updateHistoryDisplay();
+            
+            const configJson = localStorage.getItem('cslby_config');
+            if (configJson) {
+                try {
+                    const config = JSON.parse(configJson);
+                    savedGamePath = config.csgo_path || savedGamePath;
+                    pathHistory = config.path_history || pathHistory;
+                    selectedGame = config.selected_game || selectedGame;
+                } catch (e) {
+                }
+            }
         }
         
-        function saveToLauncher() {
+        function saveData() {
             const data = {
                 csgo_path: savedGamePath,
                 path_history: pathHistory,
                 selected_game: selectedGame
             };
             
+            localStorage.setItem('csgo_path', savedGamePath);
+            localStorage.setItem('csgo_path_history', JSON.stringify(pathHistory));
+            localStorage.setItem('selectedGame', selectedGame);
+            localStorage.setItem('cslby_config', JSON.stringify(data));
+            
             if (window.pyLauncher && window.pyLauncher.saveConfig) {
-                window.pyLauncher.saveConfig(data);
-            } else {
-                saveToLocalStorage(data);
+                window.pyLauncher.saveConfig(JSON.stringify(data));
             }
-        }
-        
-        function saveToLocalStorage(data) {
-            localStorage.setItem('csgo_path', data.csgo_path);
-            localStorage.setItem('csgo_path_history', JSON.stringify(data.path_history));
-            localStorage.setItem('selectedGame', data.selected_game);
         }
         
         function addToHistory(path) {
@@ -661,7 +656,7 @@
             }
             
             updateHistoryDisplay();
-            saveToLauncher();
+            saveData();
         }
         
         function removeFromHistory(path) {
@@ -669,7 +664,7 @@
             if (index !== -1) {
                 pathHistory.splice(index, 1);
                 updateHistoryDisplay();
-                saveToLauncher();
+                saveData();
             }
         }
         
@@ -677,7 +672,7 @@
             if (confirm('Вы уверены, что хотите очистить всю историю путей?')) {
                 pathHistory = [];
                 updateHistoryDisplay();
-                saveToLauncher();
+                saveData();
                 showNotification('История путей очищена');
             }
         }
@@ -731,7 +726,7 @@
             if (path) {
                 savedGamePath = path;
                 addToHistory(path);
-                saveToLauncher();
+                saveData();
                 
                 setupStatus.textContent = '✓ Путь успешно сохранен!';
                 setupStatus.style.color = '#00ffaa';
@@ -767,7 +762,7 @@
             }
             
             selectedGame = game;
-            saveToLauncher();
+            saveData();
             updateGameStatus();
         }
         
@@ -936,8 +931,8 @@
                 gameInfo.textContent = 'Выбрана игра: CS2 (запуск через Steam)';
             } else {
                 if (savedGamePath) {
-                    status.textContent = 'Готово к запуску CS:GO через лаунчер';
-                    gameInfo.textContent = 'Выбрана игра: CS:GO (запуск через лаунчер)';
+                    status.textContent = 'Готово к запуску CS:GO через Steam+лаунчер';
+                    gameInfo.textContent = 'Выбрана игра: CS:GO (запуск через Steam+лаунчер)';
                 } else {
                     status.textContent = 'Укажите путь к CS:GO в настройках';
                     gameInfo.textContent = 'Выбрана игра: CS:GO (требуется указать путь)';
