@@ -363,13 +363,6 @@
             transform: translateY(-2px);
         }
 
-        .path-example {
-            font-size: 14px;
-            color: #888888;
-            margin-top: 10px;
-            font-style: italic;
-        }
-
         .notification {
             position: fixed;
             bottom: 30px;
@@ -431,6 +424,17 @@
             color: #ffaa00;
             margin-top: 10px;
             font-weight: bold;
+        }
+        
+        .file-info {
+            font-size: 14px;
+            color: #00aaff;
+            margin-top: 10px;
+            font-family: monospace;
+            background: rgba(0, 170, 255, 0.1);
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid rgba(0, 170, 255, 0.3);
         }
     </style>
 </head>
@@ -496,8 +500,9 @@
                 <button class="save-path-btn" onclick="saveGamePath()">Сохранить</button>
             </div>
             
-            <div class="path-example">
-                Пример: D:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive
+            <div class="file-info">
+                Путь сохраняется в файл: C:/CSLBY/session.txt<br>
+                В формате: csgo=D:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive
             </div>
             
             <div class="page-status" id="setupStatus" style="margin-top: 20px;"></div>
@@ -616,14 +621,18 @@
                 return;
             }
 
-            if (!path.startsWith('csgo=')) {
-                path = 'csgo=' + path;
+            // Убедимся, что пользователь не ввел csgo= в начале
+            if (path.startsWith('csgo=')) {
+                path = path.replace('csgo=', '', 1);
             }
+
+            // Сохраняем в формате csgo=путь
+            const pathToSave = 'csgo=' + path;
 
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({
                     type: "save_path",
-                    game_path: path
+                    game_path: pathToSave
                 }));
             } else {
                 setupStatus.textContent = '✗ Нет подключения к лаунчеру';
@@ -640,6 +649,7 @@
             updateSidebarButtons();
 
             if (savedGamePath) {
+                // Показываем путь без префикса csgo=
                 document.getElementById('gamePath').value = savedGamePath;
             }
         }
@@ -673,6 +683,7 @@
                 };
             } catch (e) {
                 updateConnectionStatus(false);
+                setTimeout(connectToLauncher, 3000);
             }
         }
 
@@ -710,7 +721,6 @@
                 savedGamePath = rawPath;
                 
                 showNotification('Путь к CS:GO сохранен');
-                
                 updatePageStatus('csgo');
                 
                 setTimeout(() => {
@@ -720,7 +730,16 @@
             }
             else if (data.type === 'game_path') {
                 if (data.path) {
+                    // data.path уже без префикса csgo= (лаунчер его убирает)
                     savedGamePath = data.path;
+                    
+                    // Если есть сохраненный путь, показываем CS2
+                    if (savedGamePath) {
+                        setTimeout(() => {
+                            document.getElementById('welcomeScreen').classList.add('hidden');
+                            completeSetup();
+                        }, 500);
+                    }
                 }
             }
             else if (data.type === 'error') {
@@ -843,6 +862,7 @@
                     return;
                 }
 
+                // Отправляем в формате csgo=путь
                 const pathToSend = 'csgo=' + savedGamePath;
                 
                 if (!sendToLauncher({
