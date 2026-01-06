@@ -434,79 +434,21 @@
             display: block;
         }
 
-        .path-history {
-            margin-top: 15px;
-            max-height: 150px;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 10px;
-        }
-
-        .history-title {
-            font-size: 14px;
-            color: #888888;
-            margin-bottom: 10px;
-            text-align: left;
-        }
-
-        .history-item {
-            padding: 8px 12px;
-            background: rgba(0, 170, 255, 0.1);
-            border: 1px solid rgba(0, 170, 255, 0.2);
-            border-radius: 6px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #cccccc;
-            text-align: left;
-            transition: all 0.2s ease;
-            word-break: break-all;
-            position: relative;
-        }
-
-        .history-item:hover {
-            background: rgba(0, 170, 255, 0.2);
-            border-color: #00aaff;
-        }
-
-        .history-remove {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #ff5555;
-            font-size: 18px;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-
-        .history-item:hover .history-remove {
-            opacity: 1;
-        }
-
-        .clear-history-btn {
-            background: transparent;
-            color: #ff5555;
-            border: 1px solid #ff5555;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .clear-history-btn:hover {
-            background: rgba(255, 85, 85, 0.1);
-        }
-
         .countdown-timer {
             font-size: 16px;
             color: #ffaa00;
             margin-top: 10px;
             font-weight: bold;
+        }
+
+        .ip-display {
+            font-size: 14px;
+            color: #888888;
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(0, 170, 255, 0.1);
+            border-radius: 8px;
+            display: inline-block;
         }
     </style>
 </head>
@@ -527,25 +469,16 @@
             <h2 class="setup-title">Настройка пути к CS:GO</h2>
             <div class="setup-text">
                 Для запуска CS:GO укажите путь к папке с игрой.<br>
-                Путь будет сохранен и использоваться для будущих запусков.
+                Путь будет сохранен по вашему IP-адресу.
             </div>
             <div class="path-input-group">
                 <input type="text" id="gamePath" class="path-input" 
-                       placeholder="C:\Program Files\Steam\steamapps\common\Counter-Strike Global Offensive"
-                       list="pathHistory">
+                       placeholder="C:\Program Files\Steam\steamapps\common\Counter-Strike Global Offensive">
                 <button class="save-path-btn" onclick="saveGamePath()">Сохранить</button>
             </div>
             
-            <datalist id="pathHistory"></datalist>
-            
             <div class="path-example">
                 Пример: C:\Program Files\Steam\steamapps\common\Counter-Strike Global Offensive
-            </div>
-            
-            <div class="path-history" id="pathHistoryContainer" style="display: none;">
-                <div class="history-title">История путей:</div>
-                <div id="historyList"></div>
-                <button class="clear-history-btn" onclick="clearHistory()">Очистить историю</button>
             </div>
             
             <div class="status" id="setupStatus" style="margin-top: 20px;"></div>
@@ -597,32 +530,26 @@
     <script>
         const STORAGE_KEYS = {
             CURRENT_PATH: 'csgo_game_path',
-            PATH_HISTORY: 'csgo_path_history',
             LAUNCH_COUNT: 'csgo_launch_count',
             LAST_LAUNCH: 'csgo_last_launch',
             USER_PREFERENCES: 'csgo_user_prefs'
         };
 
         const CONFIG = {
-            MAX_HISTORY_ITEMS: 10,
-            AUTO_SAVE_HISTORY: true,
             RELAUNCH_COOLDOWN: 10
         };
 
         let selectedGame = 'cs2';
         let savedGamePath = '';
-        let pathHistory = [];
         let ws = null;
         let gameProcessId = null;
         let launchCooldown = false;
         let cooldownTimer = null;
         let countdownSeconds = CONFIG.RELAUNCH_COOLDOWN;
+        let userIP = '';
         
         let appData = {
-            paths: [],
             settings: {
-                autoSaveHistory: true,
-                maxHistoryItems: 10,
                 lastUsedGame: 'cs2',
                 theme: 'dark'
             },
@@ -630,26 +557,35 @@
                 totalLaunches: 0,
                 cs2Launches: 0,
                 csgoLaunches: 0,
-                lastLaunchTime: null,
-                favorites: []
+                lastLaunchTime: null
             }
         };
         
         document.addEventListener('DOMContentLoaded', function() {
-            loadAllData();
-            initializeApp();
+            getIPAddress();
         });
         
+        function getIPAddress() {
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    userIP = data.ip;
+                    loadAllData();
+                    initializeApp();
+                })
+                .catch(error => {
+                    userIP = 'unknown';
+                    loadAllData();
+                    initializeApp();
+                });
+        }
+        
         function loadAllData() {
-            savedGamePath = localStorage.getItem(STORAGE_KEYS.CURRENT_PATH) || '';
-            
-            const historyJson = localStorage.getItem(STORAGE_KEYS.PATH_HISTORY);
-            if (historyJson) {
-                try {
-                    pathHistory = JSON.parse(historyJson);
-                } catch (e) {
-                    pathHistory = [];
-                }
+            if (userIP && userIP !== 'unknown') {
+                const ipKey = 'csgo_path_ip_' + userIP.replace(/[^a-zA-Z0-9]/g, '_');
+                savedGamePath = localStorage.getItem(ipKey) || '';
+            } else {
+                savedGamePath = localStorage.getItem(STORAGE_KEYS.CURRENT_PATH) || '';
             }
             
             const prefsJson = localStorage.getItem(STORAGE_KEYS.USER_PREFERENCES);
@@ -670,93 +606,20 @@
         
         function saveAllData() {
             if (savedGamePath) {
-                localStorage.setItem(STORAGE_KEYS.CURRENT_PATH, savedGamePath);
+                if (userIP && userIP !== 'unknown') {
+                    const ipKey = 'csgo_path_ip_' + userIP.replace(/[^a-zA-Z0-9]/g, '_');
+                    localStorage.setItem(ipKey, savedGamePath);
+                } else {
+                    localStorage.setItem(STORAGE_KEYS.CURRENT_PATH, savedGamePath);
+                }
             }
             
-            localStorage.setItem(STORAGE_KEYS.PATH_HISTORY, JSON.stringify(pathHistory));
             localStorage.setItem(STORAGE_KEYS.USER_PREFERENCES, JSON.stringify(appData.settings));
             localStorage.setItem(STORAGE_KEYS.LAUNCH_COUNT, appData.statistics.totalLaunches.toString());
             
             if (appData.statistics.lastLaunchTime) {
                 localStorage.setItem(STORAGE_KEYS.LAST_LAUNCH, appData.statistics.lastLaunchTime.toISOString());
             }
-        }
-        
-        function addToHistory(path) {
-            if (!path || path.trim() === '') return;
-            
-            const index = pathHistory.indexOf(path);
-            if (index !== -1) {
-                pathHistory.splice(index, 1);
-            }
-            
-            pathHistory.unshift(path);
-            
-            if (pathHistory.length > CONFIG.MAX_HISTORY_ITEMS) {
-                pathHistory = pathHistory.slice(0, CONFIG.MAX_HISTORY_ITEMS);
-            }
-            
-            localStorage.setItem(STORAGE_KEYS.PATH_HISTORY, JSON.stringify(pathHistory));
-            updateHistoryDisplay();
-        }
-        
-        function removeFromHistory(path) {
-            const index = pathHistory.indexOf(path);
-            if (index !== -1) {
-                pathHistory.splice(index, 1);
-                localStorage.setItem(STORAGE_KEYS.PATH_HISTORY, JSON.stringify(pathHistory));
-                updateHistoryDisplay();
-            }
-        }
-        
-        function clearHistory() {
-            if (confirm('Вы уверены, что хотите очистить всю историю путей?')) {
-                pathHistory = [];
-                localStorage.removeItem(STORAGE_KEYS.PATH_HISTORY);
-                updateHistoryDisplay();
-                showNotification('История путей очищена');
-            }
-        }
-        
-        function updateHistoryDisplay() {
-            const historyList = document.getElementById('historyList');
-            const historyContainer = document.getElementById('pathHistoryContainer');
-            const datalist = document.getElementById('pathHistory');
-            
-            if (!historyList) return;
-            
-            historyList.innerHTML = '';
-            datalist.innerHTML = '';
-            
-            if (pathHistory.length === 0) {
-                historyContainer.style.display = 'none';
-                return;
-            }
-            
-            historyContainer.style.display = 'block';
-            
-            pathHistory.forEach(path => {
-                const option = document.createElement('option');
-                option.value = path;
-                datalist.appendChild(option);
-            });
-            
-            pathHistory.forEach(path => {
-                const historyItem = document.createElement('div');
-                historyItem.className = 'history-item';
-                historyItem.innerHTML = `
-                    ${path}
-                    <span class="history-remove" onclick="removeFromHistory('${path.replace(/'/g, "\\'")}')">×</span>
-                `;
-                
-                historyItem.onclick = function(e) {
-                    if (!e.target.classList.contains('history-remove')) {
-                        document.getElementById('gamePath').value = path;
-                    }
-                };
-                
-                historyList.appendChild(historyItem);
-            });
         }
         
         function saveGamePath() {
@@ -766,16 +629,21 @@
             
             if (path) {
                 savedGamePath = path;
-                localStorage.setItem(STORAGE_KEYS.CURRENT_PATH, path);
-                addToHistory(path);
                 
-                setupStatus.textContent = '✓ Путь успешно сохранен!';
+                if (userIP && userIP !== 'unknown') {
+                    const ipKey = 'csgo_path_ip_' + userIP.replace(/[^a-zA-Z0-9]/g, '_');
+                    localStorage.setItem(ipKey, path);
+                } else {
+                    localStorage.setItem(STORAGE_KEYS.CURRENT_PATH, path);
+                }
+                
+                setupStatus.textContent = '✓ Путь успешно сохранен по IP!';
                 setupStatus.style.color = '#00ffaa';
                 
                 appData.statistics.totalLaunches++;
                 saveAllData();
                 
-                showNotification('Путь к CS:GO сохранен');
+                showNotification('Путь к CS:GO сохранен по IP');
                 
                 setTimeout(() => {
                     document.getElementById('setupScreen').classList.remove('active');
@@ -797,7 +665,6 @@
                 showMainLauncher();
             }
             
-            updateHistoryDisplay();
             connectToLauncher();
             
             if (appData.settings.lastUsedGame) {
@@ -837,8 +704,7 @@
                 document.getElementById('gamePath').value = savedGamePath;
             }
             
-            updateHistoryDisplay();
-            document.getElementById('setupStatus').textContent = '';
+            document.getElementById('setupStatus').textContent = userIP ? `Ваш IP: ${userIP}` : '';
         }
         
         function connectToLauncher() {
