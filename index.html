@@ -32,12 +32,11 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            transition: opacity 1s ease, transform 1s ease;
+            transition: opacity 0.5s ease;
         }
 
-        .welcome-screen.fade-out {
+        .welcome-screen.hidden {
             opacity: 0;
-            transform: translateY(-100%);
             pointer-events: none;
         }
 
@@ -45,12 +44,6 @@
             text-align: center;
             max-width: 800px;
             padding: 40px;
-            animation: welcomeAppear 1.5s ease;
-        }
-
-        @keyframes welcomeAppear {
-            0% { opacity: 0; transform: translateY(50px); }
-            100% { opacity: 1; transform: translateY(0); }
         }
 
         .welcome-title {
@@ -60,12 +53,6 @@
             text-transform: uppercase;
             letter-spacing: 5px;
             text-shadow: 0 0 20px rgba(0, 170, 255, 0.5);
-            animation: glow 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes glow {
-            from { text-shadow: 0 0 10px rgba(0, 170, 255, 0.5); }
-            to { text-shadow: 0 0 20px rgba(0, 170, 255, 0.8), 0 0 30px rgba(0, 170, 255, 0.6); }
         }
 
         .welcome-subtitle {
@@ -114,22 +101,14 @@
             justify-content: center;
             align-items: center;
             z-index: 999;
-            transition: opacity 0.8s ease, transform 0.8s ease;
             opacity: 0;
             pointer-events: none;
-            transform: translateY(50px);
+            transition: opacity 0.5s ease;
         }
 
         .setup-screen.active {
             opacity: 1;
             pointer-events: all;
-            transform: translateY(0);
-        }
-
-        .setup-screen.fade-out {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-50px);
         }
 
         .setup-content {
@@ -206,13 +185,11 @@
             max-width: 1000px;
             padding: 40px;
             opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+            transition: opacity 0.5s ease;
         }
 
         .launcher.active {
             opacity: 1;
-            transform: translateY(0);
         }
 
         .settings-btn {
@@ -478,15 +455,41 @@
             background: rgba(255, 85, 85, 0.1);
         }
 
-        .countdown-timer {
-            font-size: 16px;
-            color: #ffaa00;
-            margin-top: 10px;
-            font-weight: bold;
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loader.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loader-text {
+            color: #00aaff;
+            font-size: 24px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
+    <div class="loader" id="loader">
+        <div class="loader-text">
+            Загрузка лаунчера...
+        </div>
+    </div>
+
     <div class="welcome-screen" id="welcomeScreen">
         <div class="welcome-content">
             <h1 class="welcome-title">CS Launcher</h1>
@@ -558,7 +561,6 @@
 
         <div class="controls">
             <div class="status" id="status">Готово к запуску</div>
-            <div class="countdown-timer" id="countdownTimer"></div>
             <div class="game-info" id="gameInfo">Выбрана игра: CS2 (запуск через Steam)</div>
             <button class="launch-btn" onclick="launchGame()" id="launchBtn">
                 Launch Game
@@ -576,11 +578,9 @@
         let pathHistory = [];
         let ws = null;
         let gameProcessId = null;
-        let launchCooldown = false;
-        let cooldownTimer = null;
-        let countdownSeconds = 10;
         
         document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loader').classList.remove('active');
             initializeApp();
         });
         
@@ -589,7 +589,6 @@
             updateHistoryDisplay();
             
             if (savedGamePath) {
-                document.getElementById('welcomeScreen').style.display = 'none';
                 showMainLauncher();
             }
             
@@ -735,11 +734,10 @@
                 
                 setTimeout(() => {
                     document.getElementById('setupScreen').classList.remove('active');
-                    document.getElementById('setupScreen').classList.add('fade-out');
                     
                     setTimeout(() => {
                         showMainLauncher();
-                    }, 800);
+                    }, 500);
                 }, 1000);
             } else {
                 setupStatus.textContent = '✗ Введите путь к папке с игрой';
@@ -768,7 +766,6 @@
         
         function showSettings() {
             document.getElementById('setupScreen').style.display = 'flex';
-            document.getElementById('setupScreen').classList.remove('fade-out');
             document.getElementById('setupScreen').classList.add('active');
             document.getElementById('mainLauncher').classList.remove('active');
             
@@ -851,41 +848,6 @@
             return false;
         }
         
-        function startCooldown() {
-            launchCooldown = true;
-            countdownSeconds = 10;
-            
-            const btn = document.getElementById('launchBtn');
-            const timerElement = document.getElementById('countdownTimer');
-            
-            btn.disabled = true;
-            btn.textContent = `Повторный запуск через ${countdownSeconds}с`;
-            
-            cooldownTimer = setInterval(() => {
-                countdownSeconds--;
-                
-                if (countdownSeconds <= 0) {
-                    clearCooldown();
-                    return;
-                }
-                
-                btn.textContent = `Повторный запуск через ${countdownSeconds}с`;
-                timerElement.textContent = `Повторный запуск будет доступен через: ${countdownSeconds} секунд`;
-            }, 1000);
-        }
-        
-        function clearCooldown() {
-            clearInterval(cooldownTimer);
-            launchCooldown = false;
-            
-            const btn = document.getElementById('launchBtn');
-            const timerElement = document.getElementById('countdownTimer');
-            
-            btn.disabled = false;
-            btn.textContent = 'Launch Game';
-            timerElement.textContent = '';
-        }
-        
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             return false;
@@ -902,19 +864,21 @@
         });
         
         function startSetup() {
-            document.getElementById('welcomeScreen').classList.add('fade-out');
+            document.getElementById('welcomeScreen').classList.add('hidden');
             
             setTimeout(() => {
                 document.getElementById('setupScreen').classList.add('active');
-                document.getElementById('welcomeScreen').style.display = 'none';
+                document.getElementById('setupScreen').style.display = 'flex';
                 
                 if (savedGamePath) {
                     document.getElementById('gamePath').value = savedGamePath;
                 }
-            }, 1000);
+            }, 500);
         }
         
         function showMainLauncher() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('setupScreen').classList.remove('active');
             document.getElementById('setupScreen').style.display = 'none';
             document.getElementById('settingsBtn').style.display = 'block';
             document.getElementById('mainLauncher').classList.add('active');
@@ -941,11 +905,6 @@
         }
         
         function launchGame() {
-            if (launchCooldown) {
-                showNotification(`Пожалуйста, подождите ${countdownSeconds} секунд`);
-                return;
-            }
-            
             const btn = document.getElementById('launchBtn');
             const status = document.getElementById('status');
             
@@ -964,11 +923,12 @@
                         status.textContent = 'CS2 запускается...';
                         
                         setTimeout(() => {
-                            startCooldown();
+                            btn.disabled = false;
+                            btn.textContent = 'Launch Game';
                             status.textContent = 'CS2 запущен - проверьте Steam';
-                        }, 1000);
+                        }, 2000);
                     }, 1000);
-                }, 1500);
+                }, 500);
                 
             } else if (selectedGame === 'csgo') {
                 if (!savedGamePath) {
@@ -1000,10 +960,13 @@
                 
                 status.textContent = 'Отправка запроса лаунчеру...';
                 showNotification('Запрос на запуск CS:GO отправлен');
-                startCooldown();
                 
                 setTimeout(() => {
                     status.textContent = 'Лаунчер обрабатывает запрос...';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = 'Launch Game';
+                    }, 1000);
                 }, 1000);
             }
         }
