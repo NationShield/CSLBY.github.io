@@ -449,7 +449,6 @@
     </style>
 </head>
 <body>
-    <!-- Боковая панель (скрыта до настройки) -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-btn" onclick="openGamePage('cs2')" title="CS2">
             <img src="https://raw.githubusercontent.com/NationShield/CSLBY.github.io/refs/heads/main/IMG/cs2.jpg" alt="CS2">
@@ -462,7 +461,6 @@
         </div>
     </div>
 
-    <!-- Страница CS2 -->
     <div class="game-page" id="cs2Page">
         <div class="game-cover">
             <img src="https://raw.githubusercontent.com/NationShield/CSLBY.github.io/refs/heads/main/IMG/cs2St.jpg" alt="CS2 Обложка">
@@ -476,7 +474,6 @@
         </div>
     </div>
 
-    <!-- Страница CS:GO -->
     <div class="game-page" id="csgoPage">
         <div class="game-cover">
             <img src="https://raw.githubusercontent.com/NationShield/CSLBY.github.io/refs/heads/main/IMG/csgoSt.jpg" alt="CS:GO Обложка">
@@ -490,7 +487,6 @@
         </div>
     </div>
 
-    <!-- Экран приветствия -->
     <div class="welcome-screen" id="welcomeScreen">
         <div class="welcome-content">
             <h1 class="welcome-title">CS Launcher</h1>
@@ -502,32 +498,30 @@
         </div>
     </div>
 
-    <!-- Экран настройки -->
     <div class="setup-screen" id="setupScreen">
         <div class="setup-content">
             <h2 class="setup-title">Настройка пути к CS:GO</h2>
             <div class="setup-text">
                 Для запуска CS:GO укажите путь к папке с игрой.<br>
-                Путь будет сохранен в файл на диске C.
+                Путь будет сохранен в файл на диске C в формате:<br>
+                <code style="color:#00aaff;">csgo=D:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive</code>
             </div>
             <div class="path-input-group">
                 <input type="text" id="gamePath" class="path-input" 
-                       placeholder="C:\Program Files\Steam\steamapps\common\Counter-Strike Global Offensive">
+                       placeholder="D:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive">
                 <button class="save-path-btn" onclick="saveGamePath()">Сохранить</button>
             </div>
             
             <div class="path-example">
-                Пример: C:\Program Files\Steam\steamapps\common\Counter-Strike Global Offensive
+                Пример: D:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive
             </div>
             
             <div class="page-status" id="setupStatus" style="margin-top: 20px;"></div>
         </div>
     </div>
 
-    <!-- Статус подключения -->
     <div class="connection-status" id="connectionStatus"></div>
 
-    <!-- Уведомление -->
     <div class="notification" id="notification">
         Launching game...
     </div>
@@ -618,13 +612,17 @@
 
         function saveGamePath() {
             const pathInput = document.getElementById('gamePath');
-            const path = pathInput.value.trim();
+            let path = pathInput.value.trim();
             const setupStatus = document.getElementById('setupStatus');
 
             if (!path) {
                 setupStatus.textContent = '✗ Введите путь к папке с игрой';
                 setupStatus.style.color = '#ff5555';
                 return;
+            }
+
+            if (!path.startsWith('csgo=')) {
+                path = 'csgo=' + path;
             }
 
             if (ws && ws.readyState === WebSocket.OPEN) {
@@ -655,7 +653,7 @@
         function completeSetup() {
             setupCompleted = true;
             showSidebar();
-            openGamePage('cs2'); // Автоматически открываем CS2 после настройки
+            openGamePage('cs2');
         }
 
         function connectToLauncher() {
@@ -688,10 +686,10 @@
         function updateConnectionStatus(connected) {
             const statusElement = document.getElementById('connectionStatus');
             if (connected) {
-                statusElement.textContent = '✓ Подключено к лаунчеру';
+                statusElement.textContent = '✓';
                 statusElement.className = 'connection-status connected';
             } else {
-                statusElement.textContent = '✗ Нет подключения к лаунчеру';
+                statusElement.textContent = '✗';
                 statusElement.className = 'connection-status disconnected';
             }
         }
@@ -712,7 +710,12 @@
                 setupStatus.textContent = '✓ Путь успешно сохранен в файл!';
                 setupStatus.style.color = '#00ffaa';
                 
-                savedGamePath = document.getElementById('gamePath').value.trim();
+                let rawPath = document.getElementById('gamePath').value.trim();
+                if (rawPath.startsWith('csgo=')) {
+                    rawPath = rawPath.replace('csgo=', '', 1);
+                }
+                savedGamePath = rawPath;
+                
                 showNotification('Путь к CS:GO сохранен в файл');
                 
                 updatePageStatus('csgo');
@@ -730,11 +733,9 @@
                 if (data.path) {
                     savedGamePath = data.path;
                     if (savedGamePath) {
-                        // Если путь уже есть, пропускаем настройку
                         document.getElementById('welcomeScreen').style.display = 'none';
                         completeSetup();
                     } else {
-                        // Если пути нет, показываем приветствие
                         document.getElementById('welcomeScreen').style.display = 'flex';
                     }
                 } else {
@@ -865,9 +866,11 @@
                     return;
                 }
 
+                const pathToSend = 'csgo=' + savedGamePath;
+                
                 if (!sendToLauncher({
                     type: "launch_csgo",
-                    game_path: savedGamePath
+                    game_path: pathToSend
                 })) {
                     showNotification('Нет подключения к лаунчеру!');
                     updatePageStatuses('Ошибка: нет подключения к лаунчеру');
